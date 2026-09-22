@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเครื่องคิดเลขมัลติฟังก์ชัน (Multi-Purpose Calculator)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-sky-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 min-h-screen text-slate-800 dark:text-slate-100 flex flex-col justify-between transition-all duration-300">
+
+    <!-- Header -->
+    <header class="w-full max-w-5xl mx-auto px-4 pt-6 pb-2">
+        <div class="glass-card rounded-2xl p-4 shadow-lg flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid font-bold fa-calculator text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                        ระบบเครื่องคิดเลขมัลติฟังก์ชัน
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">โปรแกรมคำนวณสารพัดประโยชน์สำหรับทุกคน</p>
+                </div>
+            </div>
+
+            <!-- Theme Toggle Button -->
+            <button id="themeToggleBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition duration-200 text-sm font-medium shadow-sm">
+                <i id="themeIcon" class="fa-solid fa-moon text-amber-500"></i>
+                <span id="themeText">โหมดมืด</span>
+            </button>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <nav class="mt-4 flex rounded-xl bg-slate-200/80 dark:bg-slate-900/80 p-1.5 backdrop-blur-md shadow-inner text-sm font-medium gap-1">
+            <button id="tabCalc" onclick="switchTab('calc')" class="flex-1 py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-sm font-semibold">
+                <i class="fa-solid fa-calculator"></i>
+                <span class="hidden sm:inline">เครื่องคิดเลข</span>ทั่วไป/วิทยาศาสตร์
+            </button>
+            <button id="tabBmi" onclick="switchTab('bmi')" class="flex-1 py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                <i class="fa-solid fa-weight-scale"></i>
+                <span class="hidden sm:inline">คำนวณ</span>ดัชนีมวลกาย (BMI)
+            </button>
+            <button id="tabDiscount" onclick="switchTab('discount')" class="flex-1 py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                <i class="fa-solid fa-tags"></i>
+                <span class="hidden sm:inline">คำนวณ</span>ราคาสินค้า & ส่วนลด
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full max-w-5xl mx-auto px-4 py-4 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Calculator Panels Container (2 columns on LG) -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Alert Box for Validation -->
+            <div id="alertBox" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm flex items-center gap-3 animate-fade-in">
+                <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                <span id="alertMessage">เกิดข้อผิดพลาดในการคำนวณ</span>
+            </div>
+
+            <!-- MODE 1: Standard & Scientific Calculator -->
+            <section id="modeCalc" class="glass-card rounded-2xl p-5 shadow-xl transition-all">
+                <div class="mb-4 flex justify-between items-center">
+                    <h2 class="font-semibold text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-sky-500"></i> เครื่องคิดเลขทั่วไป และวิทยาศาสตร์
+                    </h2>
+                    <span class="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 px-2.5 py-1 rounded-full">รองรับ Keyboard</span>
+                </div>
+
+                <!-- Display -->
+                <div class="bg-slate-900 text-right p-4 rounded-xl mb-4 border border-slate-700/50 shadow-inner">
+                    <div id="calcExpression" class="text-slate-400 text-sm h-6 overflow-hidden text-ellipsis whitespace-nowrap">0</div>
+                    <div id="calcDisplay" class="text-white text-3xl font-mono font-bold overflow-hidden text-ellipsis whitespace-nowrap mt-1">0</div>
+                </div>
+
+                <!-- Keypad -->
+                <div class="grid grid-cols-4 gap-2 text-sm font-semibold">
+                    <!-- Row 1 -->
+                    <button onclick="calcClear()" class="p-3.5 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/30 transition active:scale-95">AC</button>
+                    <button onclick="calcDelete()" class="p-3.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30 transition active:scale-95"><i class="fa-solid fa-backspace"></i></button>
+                    <button onclick="calcInput('(')" class="p-3.5 rounded-xl bg-slate-200 dark:bg-slate-700/60 hover:bg-slate-300 dark:hover:bg-slate-700 transition active:scale-95">(</button>
+                    <button onclick="calcInput(')')" class="p-3.5 rounded-xl bg-slate-200 dark:bg-slate-700/60 hover:bg-slate-300 dark:hover:bg-slate-700 transition active:scale-95">)</button>
+                    
+                    <!-- Row 2 -->
+                    <button onclick="calcInput('sqrt(')" class="p-3.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition active:scale-95">√x</button>
+                    <button onclick="calcInput('^')" class="p-3.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition active:scale-95">x^y</button>
+                    <button onclick="calcInput('%')" class="p-3.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition active:scale-95">%</button>
+                    <button onclick="calcInput('/')" class="p-3.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-400 hover:bg-sky-500/30 transition active:scale-95 text-lg">÷</button>
+
+                    <!-- Row 3 -->
+                    <button onclick="calcInput('7')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">7</button>
+                    <button onclick="calcInput('8')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">8</button>
+                    <button onclick="calcInput('9')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">9</button>
+                    <button onclick="calcInput('*')" class="p-3.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-400 hover:bg-sky-500/30 transition active:scale-95 text-lg">×</button>
+
+                    <!-- Row 4 -->
+                    <button onclick="calcInput('4')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">4</button>
+                    <button onclick="calcInput('5')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">5</button>
+                    <button onclick="calcInput('6')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">6</button>
+                    <button onclick="calcInput('-')" class="p-3.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-400 hover:bg-sky-500/30 transition active:scale-95 text-lg">-</button>
+
+                    <!-- Row 5 -->
+                    <button onclick="calcInput('1')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">1</button>
+                    <button onclick="calcInput('2')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">2</button>
+                    <button onclick="calcInput('3')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">3</button>
+                    <button onclick="calcInput('+')" class="p-3.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-400 hover:bg-sky-500/30 transition active:scale-95 text-lg">+</button>
+
+                    <!-- Row 6 -->
+                    <button onclick="calcInput('0')" class="col-span-2 p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">0</button>
+                    <button onclick="calcInput('.')" class="p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition active:scale-95">.</button>
+                    <button onclick="calcEvaluate()" class="p-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white hover:opacity-90 transition active:scale-95 shadow-md text-lg">=</button>
+                </div>
+            </section>
+
+            <!-- MODE 2: BMI Calculator -->
+            <section id="modeBmi" class="glass-card rounded-2xl p-5 shadow-xl hidden transition-all">
+                <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-weight-scale text-emerald-500"></i> คำนวณดัชนีมวลกาย (BMI)
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">น้ำหนัก (กิโลกรัม)</label>
+                        <div class="relative">
+                            <input type="number" id="bmiWeight" placeholder="เช่น 65.5" min="1" step="0.1" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+                            <span class="absolute right-3 top-2.5 text-slate-400 text-sm">กก.</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">ส่วนสูง (เซนติเมตร)</label>
+                        <div class="relative">
+                            <input type="number" id="bmiHeight" placeholder="เช่น 170" min="1" step="0.1" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+                            <span class="absolute right-3 top-2.5 text-slate-400 text-sm">ซม.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculateBMI()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md transition active:scale-[0.99] flex items-center justify-center gap-2 mb-6">
+                    <i class="fa-solid fa-calculator"></i> คำนวณค่า BMI
+                </button>
+
+                <!-- BMI Result Box -->
+                <div id="bmiResultBox" class="hidden border border-slate-200 dark:border-slate-700 rounded-2xl p-5 bg-white/50 dark:bg-slate-800/50 space-y-4">
+                    <div class="text-center">
+                        <span class="text-sm text-slate-500 dark:text-slate-400">ค่า BMI ของคุณคือ</span>
+                        <div id="bmiValue" class="text-4xl font-bold text-slate-800 dark:text-white my-1">0.0</div>
+                        <div id="bmiCategory" class="inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1">ปกติ</div>
+                    </div>
+
+                    <!-- BMI Gauge Visual -->
+                    <div class="space-y-1">
+                        <div class="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+                            <div class="h-full w-[18.5%] bg-sky-400" title="ผอม"></div>
+                            <div class="h-full w-[24.9%] bg-emerald-500" title="ปกติ"></div>
+                            <div class="h-full w-[16.5%] bg-amber-400" title="เริ่มอ้วน"></div>
+                            <div class="h-full w-[20.1%] bg-orange-500" title="อ้วน"></div>
+                            <div class="h-full w-[20%] bg-rose-600" title="อ้วนมาก"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-400 px-1">
+                            <span>18.5</span>
+                            <span>22.9</span>
+                            <span>24.9</span>
+                            <span>29.9</span>
+                            <span>30+</span>
+                        </div>
+                    </div>
+
+                    <!-- Advice Box -->
+                    <div class="bg-slate-100 dark:bg-slate-900/60 p-3.5 rounded-xl text-xs space-y-1">
+                        <span class="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-heart-pulse text-rose-500"></i> คำแนะนำเพื่อสุขภาพ:
+                        </span>
+                        <p id="bmiAdvice" class="text-slate-600 dark:text-slate-400 leading-relaxed"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MODE 3: Product Discount Calculator -->
+            <section id="modeDiscount" class="glass-card rounded-2xl p-5 shadow-xl hidden transition-all">
+                <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-tags text-purple-500"></i> คำนวณราคาสินค้า ส่วนลด และภาษี (VAT)
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">ราคาสินค้าต่อชิ้น (บาท)</label>
+                        <input type="number" id="prodPrice" placeholder="เช่น 500" min="0" step="0.01" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">จำนวนสินค้า (ชิ้น)</label>
+                        <input type="number" id="prodQty" value="1" min="1" step="1" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">ส่วนลด (%)</label>
+                        <input type="number" id="prodDiscount" placeholder="เช่น 10" min="0" max="100" step="0.1" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">ภาษีมูลค่าเพิ่ม VAT (%)</label>
+                        <input type="number" id="prodVat" value="7" min="0" step="0.1" class="w-full px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                    </div>
+                </div>
+
+                <button onclick="calculateDiscount()" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium shadow-md transition active:scale-[0.99] flex items-center justify-center gap-2 mb-6">
+                    <i class="fa-solid fa-receipt"></i> คำนวณสรุปยอดเงิน
+                </button>
+
+                <!-- Discount Result Box -->
+                <div id="discountResultBox" class="hidden border border-slate-200 dark:border-slate-700 rounded-2xl p-5 bg-white/50 dark:bg-slate-800/50 space-y-3">
+                    <h3 class="font-semibold text-sm text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">สรุปรายการคำนวณ</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600 dark:text-slate-400">ราคารวมก่อนส่วนลด:</span>
+                            <span id="resSubtotal" class="font-medium">0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-600 dark:text-emerald-400">
+                            <span>ส่วนลดทั้งหมด:</span>
+                            <span id="resDiscount" class="font-medium">-0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                            <span>ราคาหลังหักส่วนลด:</span>
+                            <span id="resAfterDiscount" class="font-medium">0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between text-amber-600 dark:text-amber-400">
+                            <span>ภาษีมูลค่าเพิ่ม (VAT):</span>
+                            <span id="resVat" class="font-medium">+0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t border-slate-200 dark:border-slate-700 pt-2 text-purple-600 dark:text-purple-400">
+                            <span>ราคาสุทธิที่ต้องชำระ:</span>
+                            <span id="resTotal">0.00 บาท</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- History Sidebar (1 column on LG) -->
+        <div class="lg:col-span-1">
+            <div class="glass-card rounded-2xl p-5 shadow-xl h-full flex flex-col justify-between min-h-[350px]">
+                <div>
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                        <h3 class="font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-sky-500"></i> ประวัติการคำนวณ
+                        </h3>
+                        <button onclick="clearHistory()" class="text-xs text-rose-500 hover:text-rose-600 font-medium transition">
+                            <i class="fa-solid fa-trash-can"></i> ล้างประวัติ
+                        </button>
+                    </div>
+
+                    <!-- History Item List -->
+                    <div id="historyList" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                        <div id="emptyHistory" class="text-center py-8 text-slate-400 text-xs">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 block opacity-40"></i>
+                            ยังไม่มีประวัติการคำนวณ
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-[11px] text-slate-400 text-center pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                    บันทึกประวัติการคำนวณโดยอัตโนมัติ
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-5xl mx-auto px-4 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p>© 2026 ระบบคำนวณมัลติฟังก์ชัน (Multi-Purpose Calculator) | พัฒนาสำหรับงานการเรียนการสอน</p>
+    </footer>
+
+    <!-- Logic & Functionality JavaScript -->
+    <script>
+        // Global State Variables
+        let currentMode = 'calc'; // 'calc', 'bmi', 'discount'
+        let calcExpressionStr = '';
+        let historyData = [];
+
+        // Dynamic Elements Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            setupKeyboardListener();
+        });
+
+        // Toggle Theme Functionality
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+
+            themeToggleBtn.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                if (isDark) {
+                    themeIcon.className = 'fa-solid fa-moon text-amber-500';
+                    themeText.textContent = 'โหมดมืด';
+                } else {
+                    themeIcon.className = 'fa-solid fa-sun text-amber-500';
+                    themeText.textContent = 'โหมดสว่าง';
+                }
+            });
+        }
+
+        // Tab Switching Handler
+        function switchTab(mode) {
+            currentMode = mode;
+            hideAlert();
+
+            // Tabs UI
+            const tabs = {
+                calc: document.getElementById('tabCalc'),
+                bmi: document.getElementById('tabBmi'),
+                discount: document.getElementById('tabDiscount')
+            };
+
+            const panels = {
+                calc: document.getElementById('modeCalc'),
+                bmi: document.getElementById('modeBmi'),
+                discount: document.getElementById('modeDiscount')
+            };
+
+            const activeClass = 'bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-sm font-semibold';
+            const inactiveClass = 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+
+            Object.keys(tabs).forEach(key => {
+                if (key === mode) {
+                    tabs[key].className = `flex-1 py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${activeClass}`;
+                    panels[key].classList.remove('hidden');
+                } else {
+                    tabs[key].className = `flex-1 py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${inactiveClass}`;
+                    panels[key].classList.add('hidden');
+                }
+            });
+        }
+
+        // Alert Message Handler
+        function showAlert(msg) {
+            const alertBox = document.getElementById('alertBox');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = msg;
+            alertBox.classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+
+        // --- MODE 1: STANDARD & SCIENTIFIC CALCULATOR LOGIC ---
+        function calcInput(char) {
+            hideAlert();
+            if (calcExpressionStr === '0' && !['.', '+', '-', '*', '/', '^', '%'].includes(char)) {
+                calcExpressionStr = '';
+            }
+            calcExpressionStr += char;
+            updateCalcDisplay();
+        }
+
+        function calcClear() {
+            hideAlert();
+            calcExpressionStr = '';
+            document.getElementById('calcDisplay').textContent = '0';
+            document.getElementById('calcExpression').textContent = '0';
+        }
+
+        function calcDelete() {
+            hideAlert();
+            calcExpressionStr = calcExpressionStr.slice(0, -1);
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            const display = document.getElementById('calcDisplay');
+            const expression = document.getElementById('calcExpression');
+            expression.textContent = calcExpressionStr || '0';
+            display.textContent = calcExpressionStr || '0';
+        }
+
+        function calcEvaluate() {
+            if (!calcExpressionStr) return;
+            try {
+                hideAlert();
+                // Safe parsing expression strings
+                let parsedStr = calcExpressionStr
+                    .replace(/sqrt\(/g, 'Math.sqrt(')
+                    .replace(/\^/g, '**');
+
+                // Evaluate safe mathematical string
+                const result = Function(`'use strict'; return (${parsedStr})`)();
+
+                if (isNaN(result) || !isFinite(result)) {
+                    showAlert('การคำนวณไม่ถูกต้อง (อาจมีการหารด้วยศูนย์)');
+                    return;
+                }
+
+                const formattedResult = Number.isInteger(result) ? result.toString() : result.toFixed(4).replace(/\.?0+$/, '');
+                
+                // Add History
+                addHistory('เครื่องคิดเลข', `${calcExpressionStr} = ${formattedResult}`);
+
+                document.getElementById('calcExpression').textContent = `${calcExpressionStr} =`;
+                document.getElementById('calcDisplay').textContent = formattedResult;
+                calcExpressionStr = formattedResult.toString();
+
+            } catch (err) {
+                showAlert('รูปแบบสมการคณิตศาสตร์ไม่ถูกต้อง');
+            }
+        }
+
+        // Keyboard Event Handler for Calculator
+        function setupKeyboardListener() {
+            document.addEventListener('keydown', (e) => {
+                if (currentMode !== 'calc') return;
+
+                const key = e.key;
+                if (/[0-9\.\+\-\*\/\(\)\%]/.test(key)) {
+                    e.preventDefault();
+                    calcInput(key);
+                } else if (key === 'Enter') {
+                    e.preventDefault();
+                    calcEvaluate();
+                } else if (key === 'Backspace') {
+                    e.preventDefault();
+                    calcDelete();
+                } else if (key === 'Escape') {
+                    e.preventDefault();
+                    calcClear();
+                }
+            });
+        }
+
+        // --- MODE 2: BMI CALCULATOR LOGIC ---
+        function calculateBMI() {
+            hideAlert();
+            const weightInput = document.getElementById('bmiWeight').value;
+            const heightInput = document.getElementById('bmiHeight').value;
+
+            const weight = parseFloat(weightInput);
+            const heightCm = parseFloat(heightInput);
+
+            // Validation
+            if (!weightInput || !heightInput || isNaN(weight) || isNaN(heightCm)) {
+                showAlert('กรุณากรอกข้อมูลน้ำหนักและส่วนสูงให้ครบถ้วน');
+                return;
+            }
+
+            if (weight <= 0 || heightCm <= 0) {
+                showAlert('ค่าน้ำหนักและส่วนสูงต้องมากกว่า 0');
+                return;
+            }
+
+            const heightM = heightCm / 100;
+            const bmi = weight / (heightM * heightM);
+            const bmiFixed = bmi.toFixed(1);
+
+            // Category & Advice Selection
+            let category = '';
+            let colorClass = '';
+            let advice = '';
+
+            if (bmi < 18.5) {
+                category = 'น้ำหนักน้อย / ผอม';
+                colorClass = 'bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300';
+                advice = 'น้ำหนักต่ำกว่าเกณฑ์ ควรรับประทานอาหารที่มีสารอาหารครบถ้วน เพิ่มปริมาณแคลอรี และออกกำลังกายเสริมสร้างมวลกล้ามเนื้อ';
+            } else if (bmi <= 22.9) {
+                category = 'ปกติ (สุขภาพดี)';
+                colorClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300';
+                advice = 'น้ำหนักอยู่ในเกณฑ์ปกติ สุขภาพดี ควบคุมการรับประทานอาหารและออกกำลังกายอย่างสม่ำเสมอเพื่อรักษาสุขภาพต่อไป';
+            } else if (bmi <= 24.9) {
+                category = 'ท้วม / เริ่มอ้วน (ท้วม)';
+                colorClass = 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300';
+                advice = 'น้ำหนักเกินเกณฑ์เล็กน้อย ควรปรับลดการบริโภคของหวาน น้ำตาล และไขมัน พร้อมเพิ่มการออกกำลังกายสัปดาห์ละ 150 นาที';
+            } else if (bmi <= 29.9) {
+                category = 'อ้วน (ระดับ 1)';
+                colorClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/60 dark:text-orange-300';
+                advice = 'อยู่ในภาวะอ้วนระดับ 1 มีความเสี่ยงต่อโรคความดันและเบาหวาน ควรวางแผนลดน้ำหนักอย่างจริงจัง ควบคุมอาหารและออกกำลังกาย';
+            } else {
+                category = 'อ้วนมาก (ระดับ 2)';
+                colorClass = 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300';
+                advice = 'อยู่ในภาวะอ้วนอันตราย เสี่ยงต่อโรคเรื้อรังหลายชนิด ควรปรึกษาแพทย์หรือผู้เชี่ยวชาญด้านโภชนาการเพื่อปรับพฤติกรรมด่วน';
+            }
+
+            // Render Output DOM
+            document.getElementById('bmiValue').textContent = bmiFixed;
+            const catElem = document.getElementById('bmiCategory');
+            catElem.textContent = category;
+            catElem.className = `inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${colorClass}`;
+            document.getElementById('bmiAdvice').textContent = advice;
+
+            document.getElementById('bmiResultBox').classList.remove('hidden');
+
+            // Save to History
+            addHistory('คำนวณ BMI', `น้ำหนัก ${weight} กก. / สูง ${heightCm} ซม. ➔ BMI: ${bmiFixed} (${category})`);
+        }
+
+        // --- MODE 3: DISCOUNT & VAT CALCULATOR LOGIC ---
+        function calculateDiscount() {
+            hideAlert();
+            const priceInput = document.getElementById('prodPrice').value;
+            const qtyInput = document.getElementById('prodQty').value;
+            const discountInput = document.getElementById('prodDiscount').value || 0;
+            const vatInput = document.getElementById('prodVat').value || 0;
+
+            const price = parseFloat(priceInput);
+            const qty = parseInt(qtyInput);
+            const discountPercent = parseFloat(discountInput);
+            const vatPercent = parseFloat(vatInput);
+
+            // Validation
+            if (!priceInput || isNaN(price) || isNaN(qty)) {
+                showAlert('กรุณากรอกราคาสินค้าและจำนวนสินค้าให้ถูกต้อง');
+                return;
+            }
+
+            if (price < 0 || qty <= 0 || discountPercent < 0 || vatPercent < 0) {
+                showAlert('จำนวนสินค้าต้องมากกว่า 0 และราคาหรือส่วนลดต้องไม่ติดลบ');
+                return;
+            }
+
+            if (discountPercent > 100) {
+                showAlert('ส่วนลดไม่สามารถเกิน 100% ได้');
+                return;
+            }
+
+            // Calculations
+            const subtotal = price * qty;
+            const discountAmount = (subtotal * discountPercent) / 100;
+            const priceAfterDiscount = subtotal - discountAmount;
+            const vatAmount = (priceAfterDiscount * vatPercent) / 100;
+            const grandTotal = priceAfterDiscount + vatAmount;
+
+            // Render Output DOM
+            document.getElementById('resSubtotal').textContent = `${formatNumber(subtotal)} บาท`;
+            document.getElementById('resDiscount').textContent = `-${formatNumber(discountAmount)} บาท (${discountPercent}%)`;
+            document.getElementById('resAfterDiscount').textContent = `${formatNumber(priceAfterDiscount)} บาท`;
+            document.getElementById('resVat').textContent = `+${formatNumber(vatAmount)} บาท (${vatPercent}%)`;
+            document.getElementById('resTotal').textContent = `${formatNumber(grandTotal)} บาท`;
+
+            document.getElementById('discountResultBox').classList.remove('hidden');
+
+            // Save to History
+            addHistory('คำนวณส่วนลด', `ยอดรวม ${formatNumber(subtotal)} บ. (ลด ${discountPercent}%) ➔ สุทธิ: ${formatNumber(grandTotal)} บาท`);
+        }
+
+        // Format Helper
+        function formatNumber(num) {
+            return num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // --- HISTORY MANAGEMENT ---
+        function addHistory(type, detail) {
+            const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            historyData.unshift({ type, detail, time });
+            renderHistory();
+        }
+
+        function clearHistory() {
+            historyData = [];
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+
+            if (historyData.length === 0) {
+                historyList.innerHTML = `
+                    <div id="emptyHistory" class="text-center py-8 text-slate-400 text-xs">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 block opacity-40"></i>
+                        ยังไม่มีประวัติการคำนวณ
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.innerHTML = historyData.map((item) => `
+                <div class="p-3 rounded-xl bg-white/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs flex flex-col gap-1 shadow-sm transition hover:border-sky-400">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-sky-600 dark:text-sky-400">${item.type}</span>
+                        <span class="text-[10px] text-slate-400">${item.time}</span>
+                    </div>
+                    <div class="text-slate-700 dark:text-slate-300 font-mono break-all">${item.detail}</div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
